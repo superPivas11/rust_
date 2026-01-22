@@ -521,13 +521,88 @@ body::after {
     font-weight: 500;
 }
 
-.feature {
+/* Анимация подпрыгивания и кружочка для всех интерактивных элементов */
+.feature,
+.stat-card,
+.voice-feature,
+.tech-badge,
+.tab-btn,
+.test-btn,
+.send-btn,
+.record-btn,
+.nav-brand,
+.status-indicator {
     position: relative;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
 }
 
-.feature:hover {
-    transform: translateY(-2px);
+.feature::before,
+.stat-card::before,
+.voice-feature::before,
+.tech-badge::before,
+.tab-btn::before,
+.test-btn::before,
+.send-btn::before,
+.record-btn::before,
+.nav-brand::before,
+.status-indicator::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.feature:hover,
+.stat-card:hover,
+.voice-feature:hover,
+.tech-badge:hover,
+.tab-btn:hover,
+.test-btn:hover,
+.send-btn:not(:disabled):hover,
+.record-btn:not(:disabled):hover,
+.nav-brand:hover,
+.status-indicator:hover {
+    transform: translateY(-8px);
+}
+
+.feature:hover::before,
+.stat-card:hover::before,
+.voice-feature:hover::before,
+.tech-badge:hover::before,
+.tab-btn:hover::before,
+.test-btn:hover::before,
+.send-btn:not(:disabled):hover::before,
+.record-btn:not(:disabled):hover::before,
+.nav-brand:hover::before,
+.status-indicator:hover::before {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+    animation: circleAppear 0.6s ease-out forwards;
+}
+
+@keyframes circleAppear {
+    0% {
+        transform: translateX(-50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(-50%) scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.8;
+    }
 }
 
 
@@ -977,14 +1052,7 @@ body::after {
     gap: var(--spacing-md);
 }
 
-.stat-card {
-    position: relative;
-    transition: transform 0.2s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-}
+/* Удалено - теперь используется общий стиль выше */
 
 
 .stat-icon {
@@ -1150,25 +1218,35 @@ body::after {
     background: var(--accent-gradient);
     border: none;
     border-radius: var(--border-radius-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
     color: white;
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    margin: 0 var(--spacing-xs);
+    margin: 0 var(--spacing-sm);
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
     box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    overflow: hidden;
 }
 
 .test-btn:hover {
     background: var(--secondary-gradient);
-    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+}
+
+.test-btn:active {
+    transform: translateY(-4px) scale(0.98);
 }
 
 .test-btn i {
-    font-size: 1rem;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.test-btn:hover i {
+    transform: rotate(15deg) scale(1.1);
 }
 
 /* Responsive Design */
