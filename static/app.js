@@ -116,33 +116,46 @@ class VoiceAssistant {
     }
 
     startPing() {
-        this.pingInterval = setInterval(() => {
+        const interval = this.pingInterval || 30000; // Используем оптимизированный интервал
+        this.pingIntervalId = setInterval(() => {
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                 this.ws.send('ping');
             }
-        }, 30000); // Ping каждые 30 секунд
+        }, interval);
     }
 
     stopPing() {
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
+        if (this.pingIntervalId) {
+            clearInterval(this.pingIntervalId);
+            this.pingIntervalId = null;
         }
     }
 
     async initAudio() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
+            // Оптимизированные настройки аудио для мобильных
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            const audioConstraints = {
                 audio: {
-                    sampleRate: 16000,
+                    sampleRate: isMobile ? 8000 : 16000, // Уменьшаем качество на мобильных
                     channelCount: 1,
                     echoCancellation: true,
-                    noiseSuppression: true
-                } 
-            });
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+            
+            // Выбираем оптимальный кодек
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                ? 'audio/webm;codecs=opus' 
+                : 'audio/webm';
             
             this.mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'audio/webm;codecs=opus'
+                mimeType: mimeType,
+                audioBitsPerSecond: isMobile ? 32000 : 64000 // Уменьшаем битрейт на мобильных
             });
             
             this.mediaRecorder.ondataavailable = (event) => {
@@ -176,6 +189,9 @@ class VoiceAssistant {
             this.stopRecording();
         });
 
+        // Оптимизация для мобильных устройств
+        this.optimizeForMobile();
+
 
 
 
@@ -204,6 +220,30 @@ class VoiceAssistant {
 
         // Инициализируем состояние кнопки
         this.updateCharCounter();
+    }
+
+    optimizeForMobile() {
+        // Определяем мобильное устройство
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // Отключаем анимации для экономии батареи
+            document.body.classList.add('mobile-optimized');
+            
+            // Уменьшаем частоту обновления визуализатора
+            this.visualizerUpdateRate = 200; // вместо 100ms
+            
+            // Оптимизируем WebSocket ping
+            this.pingInterval = 60000; // увеличиваем до 60 секунд
+            
+            // Добавляем viewport meta для правильного масштабирования
+            if (!document.querySelector('meta[name="viewport"]')) {
+                const viewport = document.createElement('meta');
+                viewport.name = 'viewport';
+                viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                document.head.appendChild(viewport);
+            }
+        }
     }
 
     switchTab(tab) {

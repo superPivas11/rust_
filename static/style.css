@@ -523,11 +523,11 @@ body::after {
 
 .feature {
     position: relative;
-    cursor: grab;
+    transition: transform 0.2s ease;
 }
 
-.feature:active {
-    cursor: grabbing;
+.feature:hover {
+    transform: translateY(-2px);
 }
 
 
@@ -979,11 +979,11 @@ body::after {
 
 .stat-card {
     position: relative;
-    cursor: grab;
+    transition: transform 0.2s ease;
 }
 
-.stat-card:active {
-    cursor: grabbing;
+.stat-card:hover {
+    transform: translateY(-2px);
 }
 
 
@@ -1232,4 +1232,66 @@ body::after {
 
 
 /* Draggable elements */
+
+/* Мобильная оптимизация */
+.mobile-optimized * {
+    animation-duration: 0.01ms !important;
+    animation-delay: -1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+}
+
+.mobile-optimized .wave {
+    animation: none !important;
+}
+
+.mobile-optimized .ripple {
+    animation: none !important;
+}
+
+/* Улучшенная производительность для мобильных */
+@media (max-width: 768px) {
+    .bg-animation {
+        display: none; /* Отключаем фоновую анимацию на мобильных */
+    }
+    
+    body::before {
+        filter: none; /* Убираем blur для экономии ресурсов */
+        opacity: 0.2;
+    }
+    
+    .voice-visualizer {
+        height: 60px; /* Уменьшаем высоту визуализатора */
+    }
+    
+    .wave-container {
+        height: 40px;
+    }
+    
+    .messages {
+        height: 250px; /* Уменьшаем высоту чата */
+    }
+    
+    /* Оптимизация для 60fps */
+    .record-btn {
+        will-change: transform;
+        transform: translateZ(0); /* Включаем аппаратное ускорение */
+    }
+    
+    .message {
+        will-change: auto;
+    }
+    
+    /* Убираем тяжелые эффекты */
+    .glass-bg {
+        backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.9);
+    }
+    
+    .navbar, .chat-container, .voice-container, .stats-container, .footer-content {
+        backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.95);
+    }
+}
 
