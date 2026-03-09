@@ -54,9 +54,8 @@ class VoiceAssistant {
         this.ws.onopen = () => {
             this.updateStatus('online', 'Подключено');
             this.serverStatusEl.textContent = 'Online';
-            this.addMessage('assistant', '✅ Подключение установлено! Можно начинать разговор.');
+            this.addMessage('assistant', ' Подключение установлено! Можно начинать разговор.');
             
-            // Запускаем ping для поддержания соединения
             this.startPing();
         };
         
@@ -64,12 +63,10 @@ class VoiceAssistant {
             this.updateStatus('offline', 'Отключено');
             this.serverStatusEl.textContent = 'Offline';
             
-            // Останавливаем ping
             this.stopPing();
-            
-            // Автоматическое переподключение через 3 секунды
+        
             if (!event.wasClean) {
-                this.addMessage('assistant', '🔄 Соединение потеряно. Переподключение через 3 секунды...');
+                this.addMessage('assistant', ' Соединение потеряно. Переподключение через 3 секунды...');
                 setTimeout(() => {
                     this.connectWebSocket(wsUrl);
                 }, 3000);
@@ -84,39 +81,27 @@ class VoiceAssistant {
         
         this.ws.onmessage = (event) => {
             if (event.data === 'pong') {
-                // Игнорируем pong сообщения
                 return;
             }
             
             const responseTime = Date.now() - this.startTime;
-            
-            // Добавляем время ответа в массив для подсчета среднего
             this.responseTimes.push(responseTime);
             this.totalRequests++;
-            
-            // Вычисляем среднее время ответа
             const averageTime = Math.round(this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length);
-            
-            // Обновляем статистику
             this.responseTimeEl.textContent = `${averageTime}ms`;
             this.requestCountEl.textContent = this.totalRequests;
-            
-            // Сохраняем статистику
             this.saveStats();
-            
             this.addMessage('assistant', event.data);
             this.recordStatus.textContent = 'Нажмите и говорите';
             this.visualizer.classList.remove('active');
-            
-            // Разблокируем интерфейс
             this.isProcessing = false;
             this.recordBtn.disabled = false;
-            this.updateCharCounter(); // Обновляем состояние кнопки отправки правильно
+            this.updateCharCounter();
         };
     }
 
     startPing() {
-        const interval = this.pingInterval || 30000; // Используем оптимизированный интервал
+        const interval = this.pingInterval || 30000; 
         this.pingIntervalId = setInterval(() => {
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                 this.ws.send('ping');
@@ -133,12 +118,11 @@ class VoiceAssistant {
 
     async initAudio() {
         try {
-            // Оптимизированные настройки аудио для мобильных
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
             const audioConstraints = {
                 audio: {
-                    sampleRate: isMobile ? 8000 : 16000, // Уменьшаем качество на мобильных
+                    sampleRate: isMobile ? 8000 : 16000, 
                     channelCount: 1,
                     echoCancellation: true,
                     noiseSuppression: true,
@@ -147,15 +131,14 @@ class VoiceAssistant {
             };
             
             const stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-            
-            // Выбираем оптимальный кодек
+
             const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
                 ? 'audio/webm;codecs=opus' 
                 : 'audio/webm';
             
             this.mediaRecorder = new MediaRecorder(stream, {
                 mimeType: mimeType,
-                audioBitsPerSecond: isMobile ? 32000 : 64000 // Уменьшаем битрейт на мобильных
+                audioBitsPerSecond: isMobile ? 32000 : 64000 
             });
             
             this.mediaRecorder.ondataavailable = (event) => {
@@ -170,7 +153,7 @@ class VoiceAssistant {
             
         } catch (error) {
             console.error('Ошибка доступа к микрофону:', error);
-            this.addMessage('system', '❌ Не удалось получить доступ к микрофону. Проверьте разрешения.');
+            this.addMessage('system', ' Не удалось получить доступ к микрофону. Проверьте разрешения.');
         }
     }
 
@@ -179,7 +162,6 @@ class VoiceAssistant {
         this.recordBtn.addEventListener('mouseup', () => this.stopRecording());
         this.recordBtn.addEventListener('mouseleave', () => this.stopRecording());
         
-        // Touch events for mobile
         this.recordBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.startRecording();
@@ -189,14 +171,12 @@ class VoiceAssistant {
             this.stopRecording();
         });
 
-        // Оптимизация для мобильных устройств
         this.optimizeForMobile();
 
 
 
 
 
-        // Закрываем соединение при закрытии страницы
         window.addEventListener('beforeunload', () => {
             this.stopPing();
             if (this.ws) {
@@ -204,11 +184,9 @@ class VoiceAssistant {
             }
         });
 
-        // Tab switching
         this.voiceTab.addEventListener('click', () => this.switchTab('voice'));
         this.textTab.addEventListener('click', () => this.switchTab('text'));
 
-        // Text input events
         this.sendBtn.addEventListener('click', () => this.sendTextMessage());
         this.messageInput.addEventListener('input', () => this.updateCharCounter());
         this.messageInput.addEventListener('keydown', (e) => {
@@ -218,25 +196,19 @@ class VoiceAssistant {
             }
         });
 
-        // Инициализируем состояние кнопки
         this.updateCharCounter();
     }
 
     optimizeForMobile() {
-        // Определяем мобильное устройство
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile) {
-            // Отключаем анимации для экономии батареи
             document.body.classList.add('mobile-optimized');
             
-            // Уменьшаем частоту обновления визуализатора
-            this.visualizerUpdateRate = 200; // вместо 100ms
-            
-            // Оптимизируем WebSocket ping
-            this.pingInterval = 60000; // увеличиваем до 60 секунд
-            
-            // Добавляем viewport meta для правильного масштабирования
+            this.visualizerUpdateRate = 200; 
+
+            this.pingInterval = 60000; // 
+
             if (!document.querySelector('meta[name="viewport"]')) {
                 const viewport = document.createElement('meta');
                 viewport.name = 'viewport';
@@ -271,8 +243,6 @@ class VoiceAssistant {
         } else {
             this.charCounter.style.color = '#6b7280';
         }
-
-        // Кнопка активна если есть текст, не превышен лимит и не идет обработка
         this.sendBtn.disabled = length === 0 || length > 500 || this.isProcessing;
     }
 
@@ -284,28 +254,18 @@ class VoiceAssistant {
         const now = Date.now();
         if (now - this.lastRequestTime < 5000) {
             const remaining = Math.ceil((5000 - (now - this.lastRequestTime)) / 1000);
-            this.addMessage('assistant', `⏱️ Подождите ${remaining} секунд перед следующим запросом`);
+            this.addMessage('assistant', `Подождите ${remaining} секунд перед следующим запросом`);
             return;
         }
 
         this.isProcessing = true;
         this.lastRequestTime = now;
-
-        // Добавляем сообщение пользователя
         this.addMessage('user', message);
-        
-        // Очищаем поле ввода
         this.messageInput.value = '';
         this.updateCharCounter();
-
-        // Блокируем кнопки
         this.sendBtn.disabled = true;
         this.recordBtn.disabled = true;
-
-        // Отправляем текст напрямую через WebSocket
         this.startTime = Date.now();
-
-        // Отправляем как текстовое сообщение с префиксом
         this.ws.send(`text:${message}`);
     }
 
@@ -315,8 +275,6 @@ class VoiceAssistant {
             const stats = JSON.parse(saved);
             this.totalRequests = stats.totalRequests || 0;
             this.responseTimes = stats.responseTimes || [];
-            
-            // Обновляем интерфейс
             this.requestCountEl.textContent = this.totalRequests;
             if (this.responseTimes.length > 0) {
                 const averageTime = Math.round(this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length);
@@ -342,8 +300,6 @@ class VoiceAssistant {
 
     startRecording() {
         if (!this.mediaRecorder || this.isRecording || this.isProcessing) return;
-        
-        // Проверяем таймаут 5 секунд
         const now = Date.now();
         if (now - this.lastRequestTime < 5000) {
             const remaining = Math.ceil((5000 - (now - this.lastRequestTime)) / 1000);
@@ -354,12 +310,12 @@ class VoiceAssistant {
         this.isRecording = true;
         this.audioChunks = [];
         this.recordBtn.classList.add('recording');
-        this.recordStatus.textContent = '🎙️ Запись...';
+        this.recordStatus.textContent = 'Запись...';
         this.visualizer.classList.add('active');
         
-        this.mediaRecorder.start(100); // Collect data every 100ms
+        this.mediaRecorder.start(100); 
         
-        this.addMessage('user', '🎤 Запись голосового сообщения...');
+        this.addMessage('user', 'Запись голосового сообщения...');
     }
 
     stopRecording() {
@@ -376,16 +332,11 @@ class VoiceAssistant {
         if (this.audioChunks.length === 0) return;
         
         try {
-            // Convert webm to wav
             const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
             const arrayBuffer = await audioBlob.arrayBuffer();
             const audioContext = new AudioContext({ sampleRate: 16000 });
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            
-            // Convert to PCM 16-bit
             const pcmData = this.audioBufferToPCM(audioBuffer);
-            
-            // Send to server
             this.startTime = Date.now();
             this.requestCount++;
             this.requestCountEl.textContent = this.requestCount;
@@ -393,7 +344,6 @@ class VoiceAssistant {
             this.ws.send(pcmData);
             this.ws.send(new TextEncoder().encode('END_STREAM'));
             
-            // Update last user message
             const userMessages = this.messages.querySelectorAll('.message.user');
             const lastUserMessage = userMessages[userMessages.length - 1];
             if (lastUserMessage) {
@@ -403,7 +353,7 @@ class VoiceAssistant {
         } catch (error) {
             console.error('Ошибка обработки аудио:', error);
             this.recordStatus.textContent = 'Ошибка обработки аудио';
-            this.addMessage('system', '❌ Ошибка обработки аудио. Попробуйте еще раз.');
+            this.addMessage('system', ' Ошибка обработки аудио. Попробуйте еще раз.');
         }
     }
 
@@ -428,14 +378,12 @@ class VoiceAssistant {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
         
-        // Avatar
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'message-avatar';
         const avatarIcon = document.createElement('i');
         avatarIcon.className = type === 'user' ? 'fas fa-user' : 'fas fa-robot';
         avatarDiv.appendChild(avatarIcon);
-        
-        // Content
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         
@@ -444,7 +392,6 @@ class VoiceAssistant {
         
         const p = document.createElement('p');
         
-        // Обрабатываем математические формулы и химические уравнения
         let processedContent = this.processFormulas(content);
         p.innerHTML = processedContent;
         
@@ -462,8 +409,7 @@ class VoiceAssistant {
         
         this.messages.appendChild(messageDiv);
         this.messages.scrollTop = this.messages.scrollHeight;
-        
-        // Обновляем MathJax для новых формул
+
         if (window.MathJax && window.MathJax.typesetPromise) {
             window.MathJax.typesetPromise([bubbleDiv]).catch((err) => {
                 console.log('MathJax typeset error:', err);
@@ -472,7 +418,6 @@ class VoiceAssistant {
     }
 
     processFormulas(text) {
-        // Заменяем специальные символы для безопасности, но сохраняем математические
         let processed = text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -480,7 +425,6 @@ class VoiceAssistant {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
         
-        // Восстанавливаем математические символы
         processed = processed
             .replace(/&lt;=/g, '≤')
             .replace(/&gt;=/g, '≥')
@@ -488,23 +432,18 @@ class VoiceAssistant {
             .replace(/-&gt;/g, '→')
             .replace(/&lt;-&gt;/g, '↔');
         
-        // Обрабатываем блочные формулы $$...$$
         processed = processed.replace(/\$\$(.*?)\$\$/gs, (match, formula) => {
             return `<div class="formula">$$${formula}$$</div>`;
         });
         
-        // Обрабатываем инлайн формулы $...$
         processed = processed.replace(/\$([^$\n]+)\$/g, (match, formula) => {
             return `$${formula}$`;
         });
         
-        // Автоматические замены для удобства
-        // Простые дроби a/b -> LaTeX
         processed = processed.replace(/\b(\d+)\/(\d+)\b/g, (match, num, den) => {
             return `$\\frac{${num}}{${den}}$`;
         });
         
-        // Квадратные корни √n -> LaTeX
         processed = processed.replace(/√\(([^)]+)\)/g, (match, content) => {
             return `$\\sqrt{${content}}$`;
         });
@@ -513,22 +452,18 @@ class VoiceAssistant {
             return `$\\sqrt{${number}}$`;
         });
         
-        // Степени x^n -> LaTeX (если не в формуле уже)
         processed = processed.replace(/(?<!\$[^$]*)\b([a-zA-Z])\^(\d+)(?![^$]*\$)/g, (match, base, power) => {
             return `$${base}^{${power}}$`;
         });
-        
-        // Химические формулы - простые молекулы
+
         processed = processed.replace(/\b([A-Z][a-z]?)(\d+)(?![^<]*>)/g, (match, element, number) => {
             return `<span class="chemical-formula">${element}<sub>${number}</sub></span>`;
         });
         
-        // Ионы с зарядами
         processed = processed.replace(/\b([A-Z][a-z]?)([²³⁴⁵⁶⁷⁸⁹])([⁺⁻])/g, (match, element, power, charge) => {
             return `<span class="chemical-formula">${element}<sup>${power}${charge}</sup></span>`;
         });
         
-        // Простые заряды +, -, 2+, 2-
         processed = processed.replace(/\b([A-Z][a-z]?)(\d*)([⁺⁻])/g, (match, element, number, charge) => {
             if (number) {
                 return `<span class="chemical-formula">${element}<sup>${number}${charge}</sup></span>`;
@@ -537,22 +472,17 @@ class VoiceAssistant {
             }
         });
         
-        // Стрелки в химических реакциях
         processed = processed.replace(/\s*->\s*/g, ' → ');
         processed = processed.replace(/\s*<->\s*/g, ' ↔ ');
         
-        // Обрабатываем переводы строк
         processed = processed.replace(/\n/g, '<br>');
         
         return processed;
     }
 }
 
-// Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.voiceAssistantInstance = new VoiceAssistant();
-    
-    // Инициализируем MathJax для существующих формул
     if (window.MathJax && window.MathJax.typesetPromise) {
         window.MathJax.typesetPromise().catch((err) => {
             console.log('MathJax initial typeset error:', err);
@@ -560,13 +490,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Функции для тестирования формул
 function testMathFormula() {
     const voiceAssistant = window.voiceAssistantInstance;
     if (voiceAssistant) {
         voiceAssistant.addMessage('user', 'Реши квадратное уравнение x² + 5x + 6 = 0');
         
-        // Симуляция ответа с формулами
         setTimeout(() => {
             const response = `Решение квадратного уравнения $ax^2 + bx + c = 0$:
 
@@ -591,7 +519,6 @@ function testChemistryFormula() {
     if (voiceAssistant) {
         voiceAssistant.addMessage('user', 'Покажи реакцию горения метана');
         
-        // Симуляция ответа с химическими формулами
         setTimeout(() => {
             const response = `Реакция горения метана:
 
