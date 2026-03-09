@@ -3,7 +3,6 @@ use std::collections::HashMap;
 pub fn decode_morse(morse: &str) -> String {
     let morse_table = get_morse_table();
     
-    // Пробуем декодировать с пробелами (если есть)
     if morse.contains(' ') {
         let words: Vec<&str> = morse.split("  ").collect();
         let mut result = String::new();
@@ -23,8 +22,6 @@ pub fn decode_morse(morse: &str) -> String {
         }
         return result;
     }
-    
-    // Декодируем сплошной текст (без пробелов) - используем динамическое программирование
     decode_continuous_dp(morse, &morse_table)
 }
 
@@ -34,7 +31,6 @@ fn decode_continuous_dp(morse: &str, table: &HashMap<&str, &str>) -> String {
         return String::new();
     }
     
-    // dp[i] = (decoded_string, is_valid)
     let mut dp: Vec<Option<String>> = vec![None; n + 1];
     dp[0] = Some(String::new());
     
@@ -43,26 +39,20 @@ fn decode_continuous_dp(morse: &str, table: &HashMap<&str, &str>) -> String {
             continue;
         }
         
-        // Пробуем все возможные длины кода (1-6 символов)
         for len in 1..=6.min(n - i) {
             let code = &morse[i..i + len];
             if let Some(letter) = table.get(code) {
                 let mut new_str = dp[i].as_ref().unwrap().clone();
                 new_str.push_str(letter);
-                
-                // Если уже есть решение для этой позиции, выбираем более короткое
                 if dp[i + len].is_none() || dp[i + len].as_ref().unwrap().len() > new_str.len() {
                     dp[i + len] = Some(new_str);
                 }
             }
         }
     }
-    
-    // Возвращаем результат
     if let Some(result) = dp[n].as_ref() {
         result.clone()
     } else {
-        // Если не удалось декодировать полностью, пробуем жадный алгоритм
         decode_continuous_greedy(morse, table)
     }
 }
@@ -74,7 +64,6 @@ fn decode_continuous_greedy(morse: &str, table: &HashMap<&str, &str>) -> String 
     while i < morse.len() {
         let mut found = false;
         
-        // Пробуем найти самую длинную подходящую последовательность
         for len in (1..=6.min(morse.len() - i)).rev() {
             let code = &morse[i..i + len];
             if let Some(letter) = table.get(code) {
@@ -97,7 +86,6 @@ fn decode_continuous_greedy(morse: &str, table: &HashMap<&str, &str>) -> String 
 fn get_morse_table() -> HashMap<&'static str, &'static str> {
     let mut table = HashMap::new();
     
-    // Латиница
     table.insert(".-", "A");
     table.insert("-...", "B");
     table.insert("-.-.", "C");
@@ -124,8 +112,6 @@ fn get_morse_table() -> HashMap<&'static str, &'static str> {
     table.insert("-..-", "X");
     table.insert("-.--", "Y");
     table.insert("--..", "Z");
-    
-    // Кириллица
     table.insert(".-", "А");
     table.insert("-...", "Б");
     table.insert(".--", "В");
@@ -157,8 +143,6 @@ fn get_morse_table() -> HashMap<&'static str, &'static str> {
     table.insert("..-..", "Э");
     table.insert("..--", "Ю");
     table.insert(".-.-", "Я");
-    
-    // Цифры
     table.insert(".----", "1");
     table.insert("..---", "2");
     table.insert("...--", "3");
@@ -169,8 +153,6 @@ fn get_morse_table() -> HashMap<&'static str, &'static str> {
     table.insert("---..", "8");
     table.insert("----.", "9");
     table.insert("-----", "0");
-    
-    // Знаки препинания
     table.insert(".-.-.-", ".");
     table.insert("--..--", ",");
     table.insert("..--..", "?");
