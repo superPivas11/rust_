@@ -11,8 +11,6 @@ pub fn save_raw_as_wav(raw_data: &[u8], filename: &Path) -> Result<()> {
     };
 
     let mut writer = WavWriter::create(filename, spec)?;
-
-    // Конвертируем байты в i16 samples
     for chunk in raw_data.chunks_exact(2) {
         let sample = i16::from_le_bytes([chunk[0], chunk[1]]);
         writer.write_sample(sample)?;
