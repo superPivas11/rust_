@@ -157,8 +157,7 @@ UNICODE СИМВОЛЫ (используй их напрямую):
 Индексы: x_i (НЕ x_{i})".to_string(),
             }
         ];
-
-        // Добавляем историю разговора (только последние 10 сообщений для экономии токенов)
+        
         let recent_history = if conversation_history.len() > 5 {
             &conversation_history[conversation_history.len() - 5..]
         } else {
@@ -175,8 +174,6 @@ UNICODE СИМВОЛЫ (используй их напрямую):
                 content: assistant_msg.clone(),
             });
         }
-
-        // Добавляем текущий вопрос
         messages.push(ChatMessage {
             role: "user".to_string(),
             content: text.to_string(),
